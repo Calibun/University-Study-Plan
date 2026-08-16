@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Plan · ESAT 2026</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+:root {
+  --bg:#0e0e0f;--surface:#161618;--surface2:#1e1e21;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e8e8e6;--muted:#666;--muted2:#444;
+  --maths:#3ecf8e;--maths-dim:rgba(62,207,142,0.12);
+  --physics:#5b9cf6;--physics-dim:rgba(91,156,246,0.12);
+  --cs:#a78bfa;--cs-dim:rgba(167,139,250,0.12);
+  --esat:#f59e0b;--esat-dim:rgba(245,158,11,0.14);
+  --red:#f87171;--red-dim:rgba(248,113,113,0.12);
+  --amber:#fbbf24;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;}
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:260px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-top{padding:20px 18px 16px;border-bottom:1px solid var(--border);}
+.app-title{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;}
+.exam-list{display:flex;flex-direction:column;gap:6px;}
+.exam-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);}
+.exam-days{font-family:var(--mono);font-size:13px;font-weight:500;min-width:28px;text-align:center;}
+.exam-info{flex:1;min-width:0;}
+.exam-name{font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.exam-date{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.days-urgent{color:var(--red);}
+.days-soon{color:var(--amber);}
+.days-ok{color:var(--maths);}
+.tbc-note{font-size:10px;color:var(--muted2);font-style:italic;padding:8px 2px 0;line-height:1.5;}
+.subject-key{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:6px;}
+.key-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;}
+.key-item{display:flex;align-items:center;gap:7px;font-size:12px;}
+.key-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.stats-section{padding:14px 18px;flex:1;overflow-y:auto;}
+.stat-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.stat-label{font-size:11px;color:var(--muted);flex:1;}
+.stat-bar{flex:1;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;}
+.stat-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+.stat-val{font-family:var(--mono);font-size:10px;color:var(--muted);min-width:24px;text-align:right;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.plan-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.phase-tabs{display:flex;gap:4px;flex:1;flex-wrap:wrap;}
+.phase-tab{font-size:11px;font-family:var(--mono);padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+.phase-tab:hover{border-color:var(--border2);color:var(--text);}
+.phase-tab.active{background:var(--surface2);border-color:var(--border2);color:var(--text);}
+.today-badge{font-family:var(--mono);font-size:10px;color:var(--muted);padding:4px 10px;border:1px solid var(--border);border-radius:6px;}
+.plan-body{flex:1;overflow-y:auto;padding:16px 20px;}
+.day-card{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;transition:border-color .15s;}
+.day-card:hover{border-color:var(--border2);}
+.day-card.today{border-color:rgba(62,207,142,0.3);}
+.day-card.exam-day{border-color:rgba(248,113,113,0.3);}
+.day-card.done{opacity:.5;}
+.day-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:var(--surface);flex-wrap:wrap;}
+.day-card.today .day-hdr{background:rgba(62,207,142,0.04);}
+.day-card.exam-day .day-hdr{background:rgba(248,113,113,0.04);}
+.day-date{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:80px;}
+.day-label{font-size:13px;font-weight:500;color:var(--text);flex:1;}
+.day-tags{display:flex;gap:4px;flex-wrap:wrap;}
+.dtag{font-size:10px;padding:2px 6px;border-radius:4px;font-family:var(--mono);}
+.dtag-m{background:var(--maths-dim);color:var(--maths);}
+.dtag-p{background:var(--physics-dim);color:var(--physics);}
+.dtag-c{background:var(--cs-dim);color:var(--cs);}
+.dtag-esat{background:var(--esat-dim);color:var(--esat);}
+.dtag-r{background:rgba(255,255,255,0.05);color:var(--muted);}
+.dtag-e{background:var(--red-dim);color:var(--red);}
+.done-check{width:20px;height:20px;border-radius:50%;border:1px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;transition:all .15s;flex-shrink:0;}
+.done-check:hover{border-color:var(--maths);}
+.done-check.checked{background:var(--maths);border-color:var(--maths);color:#000;}
+.chevron{font-size:10px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+.chevron.open{transform:rotate(180deg);}
+.day-body{display:none;border-top:1px solid var(--border);padding:12px 14px;background:var(--surface);}
+.day-body.open{display:block;}
+.exam-banner{background:var(--red-dim);border:1px solid rgba(248,113,113,0.2);border-radius:6px;padding:7px 10px;margin-bottom:10px;font-size:11px;color:var(--red);font-family:var(--mono);line-height:1.5;}
+.note-banner{background:var(--surface2);border-radius:6px;padding:7px 10px;margin-bottom:10px;font-size:11px;color:var(--muted);font-style:italic;line-height:1.5;}
+.ai-note{background:var(--maths-dim);border-left:2px solid var(--maths);border-radius:0 6px 6px 0;padding:7px 10px;margin-bottom:10px;font-size:11px;color:var(--maths);}
+.task-list{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.task-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.5;color:var(--text);}
+.task-dot{width:5px;height:5px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.tdm{background:var(--maths);}
+.tdp{background:var(--physics);}
+.tdc{background:var(--cs);}
+.tde{background:var(--esat);}
+.tdr{background:var(--muted2);}
+.task-time{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:auto;padding-left:8px;white-space:nowrap;flex-shrink:0;}
+.task-check{width:14px;height:14px;border-radius:3px;border:1px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent;transition:all .15s;flex-shrink:0;margin-top:2px;}
+.task-check:hover{border-color:var(--maths);}
+.task-check.checked{background:var(--maths);border-color:var(--maths);color:#000;}
+.task-item.task-done{opacity:.4;text-decoration:line-through;text-decoration-color:var(--muted2);}
+.total-row{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
+.total-label{font-size:11px;color:var(--muted);}
+.total-val{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text);}
+.chat-panel{width:320px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);}
+.chat-header{padding:14px 16px;border-bottom:1px solid var(--border);font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.chat-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
+.msg{padding:9px 11px;border-radius:8px;font-size:12px;line-height:1.6;max-width:100%;word-wrap:break-word;}
+.msg-user{background:var(--surface2);border:1px solid var(--border);color:var(--text);align-self:flex-end;max-width:85%;}
+.msg-ai{background:var(--esat-dim);border:1px solid rgba(245,158,11,0.2);color:var(--text);align-self:flex-start;max-width:95%;}
+.msg-thinking{display:flex;gap:4px;align-items:center;padding:9px 11px;}
+.dot-pulse{width:5px;height:5px;border-radius:50%;background:var(--esat);animation:pulse 1.2s infinite;}
+.dot-pulse:nth-child(2){animation-delay:.2s;}
+.dot-pulse:nth-child(3){animation-delay:.4s;}
+@keyframes pulse{0%,80%,100%{opacity:.3;transform:scale(.8);}40%{opacity:1;transform:scale(1);}}
+.chat-input-area{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;}
+.chat-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;resize:none;outline:none;min-height:36px;max-height:100px;transition:border-color .15s;}
+.chat-input:focus{border-color:var(--border2);}
+.chat-input::placeholder{color:var(--muted);}
+.send-btn{background:var(--esat);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#000;font-size:13px;flex-shrink:0;transition:opacity .15s;}
+.send-btn:hover{opacity:.85;}
+.send-btn:disabled{opacity:.4;cursor:default;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--muted2);border-radius:2px;}
+@media (max-width:900px){.chat-panel{display:none;}}
+@media (max-width:700px){.sidebar{width:210px;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <div class="app-title">Study Plan · ESAT 2026</div>
+      <div class="exam-list" id="examList"></div>
+      <div class="tbc-note">Per-subject CIE exam dates TBC — structure below is generic until you have your real timetable.</div>
+    </div>
+    <div class="subject-key">
+      <div class="key-label">Subjects</div>
+      <div class="key-item"><div class="key-dot" style="background:var(--esat)"></div>ESAT</div>
+      <div class="key-item"><div class="key-dot" style="background:var(--maths)"></div>Maths (A*)</div>
+      <div class="key-item"><div class="key-dot" style="background:var(--physics)"></div>Physics (A)</div>
+      <div class="key-item"><div class="key-dot" style="background:var(--cs)"></div>Computer Science (A)</div>
+    </div>
+    <div class="stats-section">
+      <div class="key-label" style="margin-bottom:10px;">Current standing</div>
+      <div id="statsPanel"></div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+        <div class="key-label" style="margin-bottom:8px;">Overall progress</div>
+        <div class="stat-bar" style="height:4px;margin-bottom:6px;"><div id="progressFill" class="stat-fill" style="width:0%;background:var(--esat)"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span id="progressPct" style="font-family:var(--mono);font-size:11px;color:var(--esat)">0%</span>
+          <span id="progressMin" style="font-family:var(--mono);font-size:10px;color:var(--muted)">— min to go</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="plan-header">
+      <div class="phase-tabs">
+        <button class="phase-tab active" onclick="switchPhase(1)">Foundation</button>
+        <button class="phase-tab" onclick="switchPhase(2)">Term Starts</button>
+        <button class="phase-tab" onclick="switchPhase(3)">ESAT & Exams</button>
+        <button class="phase-tab" onclick="switchPhase(4)">Final Exams</button>
+      </div>
+      <div class="today-badge" id="todayBadge"></div>
+    </div>
+    <div class="plan-body" id="planBody"></div>
+  </div>
+  <div class="chat-panel">
+    <div class="chat-header">Update your plan</div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg msg-ai">Hey! Tell me anything — grades, how long you studied, skipped sessions, upcoming tests. I'll rewrite the plan on the spot.</div>
+    </div>
+    <div class="chat-input-area">
+      <textarea class="chat-input" id="chatInput" placeholder="e.g. did an ESAT physics section, 14/20..." rows="1"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- date helpers (UTC, avoid timezone drift) ---------- */
+function toDateObj(str){ const [y,m,d]=str.split('-').map(Number); return new Date(Date.UTC(y,m-1,d)); }
+function toStr(d){ return d.toISOString().slice(0,10); }
+function addDays(str,n){ const d=toDateObj(str); d.setUTCDate(d.getUTCDate()+n); return toStr(d); }
+function dowOf(str){ return toDateObj(str).getUTCDay(); }
+function fmtLabel(str){ return toDateObj(str).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}); }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function daysUntil(d){ return Math.round((toDateObj(d)-toDateObj(today()))/86400000); }
+function formatToday(){ return new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}); }
+
+/* ---------- plan constants ---------- */
+const PLAN_START='2026-08-17';
+const PLAN_END='2026-11-13';
+const DIAGNOSTIC_DAY='2026-08-17';
+const COMPETITION_DAY='2026-08-30';
+const WIND_TUNNEL_END='2026-08-31';
+const ESAT_WEEK_START='2026-10-12';
+const ESAT_WEEK_END='2026-10-16';
+const UCAS_DEADLINE='2026-10-15';
+const SUPP_DEADLINE='2026-10-22';
+const PS_CUTOFF='2026-09-21';
+const SMC_DAY='2026-10-07';
+const SMC_PREP_1='2026-10-03';
+const SMC_PREP_2='2026-10-05';
+const BMO1_DAY='2026-11-18';
+const CS_TEACHER_TALK='2026-09-02';
+
+const PHASES=[
+  {id:1,start:'2026-08-17',end:'2026-09-01'},
+  {id:2,start:'2026-09-02',end:'2026-09-27'},
+  {id:3,start:'2026-09-28',end:'2026-10-16'},
+  {id:4,start:'2026-10-17',end:'2026-11-13'},
+];
+function phaseForDate(str){ for(const p of PHASES){ if(str>=p.start&&str<=p.end) return p; } return null; }
+
+const EXAMS=[
+  {short:"School — Term Starts",date:"2026-09-02"},
+  {short:"Exam Window — Opens (dates TBC)",date:"2026-09-28"},
+  {short:"ESAT — Sitting Window",date:"2026-10-12"},
+  {short:"UCAS — Application Deadline",date:"2026-10-15"},
+  {short:"Cambridge — Supplementary Form",date:"2026-10-22"},
+  {short:"Exam Window — Closes (approx)",date:"2026-11-13"},
+];
+
+const DEFAULT_STATS=[
+  {label:"ESAT — Maths",pct:0,color:"var(--muted2)"},
+  {label:"ESAT — Physics",pct:0,color:"var(--muted2)"},
+  {label:"Maths — A2 Retake",pct:0,color:"var(--muted2)"},
+  {label:"Physics — AS Retake",pct:0,color:"var(--muted2)"},
+  {label:"CS — AS Retake",pct:0,color:"var(--muted2)"},
+];
+
+const tagLabel={m:"maths",p:"physics",c:"comp sci",esat:"ESAT",r:"other",e:"key date"};
+const tagClass={m:"dtag-m",p:"dtag-p",c:"dtag-c",esat:"dtag-esat",r:"dtag-r",e:"dtag-e"};
+const subjectDot={m:'dm',p:'dp',c:'dc',fm:'dm'};
+const subjectName={m:'Maths',p:'Physics',c:'CS',fm:'Further Maths'};
+
+/* ---------- plan generator ---------- */
+function buildPlan(){
+  const plan=[];
+  const ROT=['m','p','c'];
+  const ROT2=['m','p','c','fm'];
+  let rotIdx=0, altToggle=0;
+  let cur=PLAN_START;
+
+  while(cur<=PLAN_END){
+    const dow=dowOf(cur);
+    const isWeekend=dow===0||dow===6;
+    const isClimb=dow===2||dow===4;
+    const phase=phaseForDate(cur).id;
+    const tasks=[]; const tags=[]; const notesArr=[]; const examArr=[];
+
+    function add(d,t,mins,tag){ tasks.push({d,t,time:mins+' min'}); tags.push(tag); }
+
+    if (cur===DIAGNOSTIC_DAY){
+      notesArr.push("Diagnostic day — sets the weighting for the rest of Phase 1. No prep, just see where you actually stand.");
+      add('dm',"Maths — Diagnostic: past paper, cold, timed, no notes.",75,'m');
+      add('dp',"Physics — Diagnostic: past paper, cold, timed, no notes.",60,'p');
+      add('dc',"CS — Diagnostic: past paper, cold, timed, no notes.",60,'c');
+      add('de',"ESAT — Diagnostic: one specimen section, timed, if you have one to hand.",45,'esat');
+    } else if (cur===COMPETITION_DAY){
+      notesArr.push("Possible competition today — confirm what it actually is, and whether it needs prep beforehand.");
+      add('dr',"Light ESAT review only if there's time. Otherwise take the day off.",30,'r');
+    } else if (phase===1){
+      add('de',"ESAT — Maths: content/technique early in the phase, ramping to timed sections by end of August.",90,'esat');
+      add('de',"ESAT — Physics: content/technique early in the phase, ramping to timed sections by end of August.",90,'esat');
+      add('dc',"CS — Retake Prep: no ESAT crossover, needs daily protection.",90,'c');
+      const alt=(altToggle%2===0)?'m':'p'; altToggle++;
+      add(subjectDot[alt],`${subjectName[alt]} — Retake Prep: alternating with ${alt==='m'?'Physics':'Maths'} day to day.`,90,alt);
+      if (isClimb){ add('dr',"Climbing, incl. travel.",120,'r'); }
+      else if (cur<=WIND_TUNNEL_END){ add('dr',"Wind Tunnel — physical build/print/sensors at home, or CFD/OpenFOAM if you're away.",105,'r'); }
+      add('dr',"Reading.",45,'r');
+      if ([1,3,5].includes(dow)) add('dr',"Personal Statement session.",75,'r');
+    } else if (phase===2||phase===4){
+      notesArr.push('School 8:00–16:00.');
+      if (!isWeekend) add('dr',"Robotics — team session.",90,'r');
+      if (cur===CS_TEACHER_TALK) add('dr',"CS — talk to the new teacher about predicted-grade expectations for the year. Do this early.",15,'r');
+
+      if (isWeekend){
+        if (phase===2){
+          add('de',"ESAT — Mock: full timed section, 120 min, no calculator, real conditions.",120,'esat');
+          ROT.forEach(s=>add(subjectDot[s],`${subjectName[s]} — Retake Prep: catch-up / weak-topic focus.`,60,s));
+          add('dm',"Further Maths — Prep: getting ahead before Year 13 lessons kick in properly. This is what the predicted A* hinges on.",60,'m');
+          add('dr',"Reading.",45,'r');
+          if (dow===0 && cur<=PS_CUTOFF) add('dr',"Personal Statement session.",75,'r');
+        } else {
+          const s1=ROT[rotIdx%3], s2=ROT[(rotIdx+1)%3]; rotIdx+=2;
+          add(subjectDot[s1],`${subjectName[s1]} — Retake Prep: timed past paper, or whichever's soonest on your real timetable.`,135,s1);
+          add(subjectDot[s2],`${subjectName[s2]} — Retake Prep: timed past paper, or whichever's soonest on your real timetable.`,135,s2);
+        }
+      } else if (isClimb){
+        notesArr.push('Robotics + climbing both today — maintenance day, not a study day.');
+        add('dr',"Light past-paper set only if there's genuinely time left. Don't force it.",30,'r');
+      } else {
+        if (phase===2){
+          add('de',"ESAT — Practice: timed section work.",105,'esat');
+          if (dow===1 && cur<=PS_CUTOFF){ add('dr',"Personal Statement session (replaces subject slot today).",50,'r'); }
+          else {
+            const s=ROT2[rotIdx%4]; rotIdx++;
+            const desc = s==='fm' ? `${subjectName[s]} — Prep: getting ahead, this is what the predicted A* hinges on.` : `${subjectName[s]} — Retake Prep.`;
+            add(subjectDot[s],desc,75,s==='fm'?'m':s);
+          }
+          add('dr',"Homework — do it properly. Predicted grades are partly built on this, not just papers at home.",40,'r');
+        } else {
+          const s=ROT[rotIdx%3]; rotIdx++;
+          add(subjectDot[s],`${subjectName[s]} — Retake Prep: timed past paper, or whichever remains soonest on your timetable.`,150,s);
+          add('dr',"Homework.",30,'r');
+        }
+      }
+      if (phase===4 && cur===SUPP_DEADLINE) examArr.push('"My Cambridge Application" supplementary form due today, 6pm — separate from UCAS, easy to lose track of mid-exams.');
+      if (phase===4 && cur===PLAN_END) notesArr.push('Exam window should be wrapping up around here — adjust once your real dates are confirmed. If SMC results qualify you, BMO1 is Nov 18 — outside this tracker for now, revisit once exams wrap.');
+    } else if (phase===3){
+      notesArr.push('School 8:00–16:00.');
+      if (!isWeekend) add('dr',"Robotics — team session.",90,'r');
+      if (cur==='2026-09-28') notesArr.push('Personal Statement should be ~95% done by now — proofread + final checks only from here, no task logged.');
+      if (cur===SMC_PREP_1 || cur===SMC_PREP_2) add('dm',"Maths — SMC Prep: light past-question practice, Q15–25 range. Keep it brief, ESAT/CIE still lead.",30,'m');
+      if (cur===SMC_DAY) notesArr.push('SMC today — 90 min, sat at school. Back to ESAT/CIE as normal once it\'s done, no extra prep needed beforehand.');
+      if (cur==='2026-10-10' && cur<UCAS_DEADLINE) examArr.push('Target: submit the Personal Statement around now — ahead of the 15th, clear of ESAT week.');
+
+      if (cur>=ESAT_WEEK_START && cur<=ESAT_WEEK_END){
+        examArr.push('ESAT week — light touch only. Past-paper review, nothing new. Protect your energy for the sitting.');
+        notesArr.push('Robotics should be scaled back this week — worth confirming with your team lead in advance.');
+        if (cur===UCAS_DEADLINE) examArr.push('UCAS deadline today, 6pm — everything except AS/A level revision and robotics stops from here on.');
+        add('de',"ESAT — Light Review: papers you've already done, mark schemes only.",45,'esat');
+      } else if (isWeekend){
+        if (cur<ESAT_WEEK_START) add('de',"ESAT — Mock: full timed section, real conditions.",120,'esat');
+        const s=ROT[rotIdx%3]; rotIdx++;
+        add(subjectDot[s],`${subjectName[s]} — Retake Prep: timed past paper, or whichever's soonest on your real timetable.`,180,s);
+        if (cur<UCAS_DEADLINE) add('dr',"Reading, only if book 2 slipped.",20,'r');
+      } else if (isClimb){
+        notesArr.push("Recovery day — light review only if there's time.");
+        add('dr',"Light past-paper set, optional.",30,'r');
+      } else {
+        const s=ROT[rotIdx%3]; rotIdx++;
+        add(subjectDot[s],`${subjectName[s]} — Retake Prep: timed past paper, or whichever's soonest on your actual timetable.`,120,s);
+        if (cur<ESAT_WEEK_START) add('de',"ESAT — Timed Section: keep pace sharp.",60,'esat');
+      }
+    }
+
+    const totalMin=tasks.reduce((sum,tk)=>{const m=tk.time.match(/(\d+)/);return sum+(m?parseInt(m[1]):0);},0);
+    tasks.push({total: totalMin+' min'});
+    if (examArr.length) tags.unshift('e');
+
+    plan.push({
+      phase, lbl: fmtLabel(cur), date: cur, tags,
+      exam: examArr.length ? examArr.join(' ') : null,
+      note: notesArr.length ? notesArr.join(' ') : null,
+      tasks
+    });
+    cur=addDays(cur,1);
+  }
+  return plan;
+}
+
+let currentPhase=1;
+let checkedDays={};
+let checkedTasks={};
+let stats=JSON.parse(JSON.stringify(DEFAULT_STATS));
+let planData=buildPlan();
+
+/* ---------- storage ---------- */
+async function loadStorage(){
+  try{const r=await window.storage.get('checked_days'); if(r) checkedDays=JSON.parse(r.value);}catch(e){}
+  try{const r=await window.storage.get('checked_tasks'); if(r) checkedTasks=JSON.parse(r.value);}catch(e){}
+  try{const r=await window.storage.get('stats_data'); if(r) stats=JSON.parse(r.value);}catch(e){}
+  try{const r=await window.storage.get('plan_data'); if(r) planData=JSON.parse(r.value);}catch(e){}
+}
+async function saveAll(){
+  renderProgress();
+  try{await window.storage.set('checked_days', JSON.stringify(checkedDays));}catch(e){}
+  try{await window.storage.set('checked_tasks', JSON.stringify(checkedTasks));}catch(e){}
+  try{await window.storage.set('stats_data', JSON.stringify(stats));}catch(e){}
+  try{await window.storage.set('plan_data', JSON.stringify(planData));}catch(e){}
+}
+
+/* ---------- rendering ---------- */
+function renderProgress(){
+  const parseMin=s=>{const m=s&&s.match(/(\d+)\s*min/);return m?parseInt(m[1]):0;};
+  let totalMin=0, doneMin=0;
+  planData.forEach(day=>{
+    const regularTasks=day.tasks.filter(tk=>!tk.total&&tk.time);
+    regularTasks.forEach((tk,i)=>{
+      const mins=parseMin(tk.time);
+      totalMin+=mins;
+      if (checkedTasks[`${day.date}-${i}`]) doneMin+=mins;
+    });
+  });
+  const pct = totalMin>0 ? Math.round(doneMin/totalMin*100) : 0;
+  const remaining = totalMin-doneMin;
+  const fill=document.getElementById('progressFill');
+  const pctEl=document.getElementById('progressPct');
+  const minEl=document.getElementById('progressMin');
+  if (fill) fill.style.width=pct+'%';
+  if (pctEl) pctEl.textContent=pct+'%';
+  if (minEl) minEl.textContent=remaining+' min to go';
+}
+
+function renderExams(){
+  document.getElementById('examList').innerHTML = EXAMS.map(e=>{
+    const d=daysUntil(e.date); if (d<-1) return '';
+    const cls = d<=7 ? 'days-urgent' : d<=21 ? 'days-soon' : 'days-ok';
+    return `<div class="exam-item"><div class="exam-days ${cls}">${d<0?'✓':d+'d'}</div><div class="exam-info"><div class="exam-name">${e.short}</div><div class="exam-date">${e.date}</div></div></div>`;
+  }).join('');
+}
+
+function renderStats(){
+  document.getElementById('statsPanel').innerHTML = stats.map(s=>`
+    <div class="stat-row"><div class="stat-label">${s.label}</div>
+    <div class="stat-bar"><div class="stat-fill" style="width:${s.pct}%;background:${s.color}"></div></div>
+    <div class="stat-val">${s.pct?s.pct+'%':'—'}</div></div>`).join('');
+}
+
+function renderPlan(){
+  const el=document.getElementById('planBody'), t=today();
+  el.innerHTML = planData.filter(d=>d.phase===currentPhase).map(day=>{
+    const isToday=day.date===t, isExam=!!day.exam, isDone=checkedDays[day.date];
+    const tagsHtml=day.tags.map(tg=>`<span class="dtag ${tagClass[tg]}">${tagLabel[tg]}</span>`).join('');
+    const examHtml=day.exam?`<div class="exam-banner">${day.exam}</div>`:'';
+    const noteHtml=day.note?`<div class="note-banner">${day.note}</div>`:'';
+    const aiHtml=day.aiNote?`<div class="ai-note">${day.aiNote}</div>`:'';
+    const regularTasks=day.tasks.filter(tk=>!tk.total);
+    const totalEntry=day.tasks.find(tk=>tk.total);
+    const tasksHtml=regularTasks.map((tk,i)=>{
+      const taskKey=`${day.date}-${i}`;
+      const isDoneTask=checkedTasks[taskKey];
+      return `<li class="task-item${isDoneTask?' task-done':''}" id="task-${taskKey}"><span class="task-dot td${tk.d.slice(1)}"></span><span>${tk.t}</span>${tk.time?`<span class="task-time">${tk.time}</span><div class="task-check${isDoneTask?' checked':''}" onclick="toggleTask('${taskKey}')">✓</div>`:''}</li>`;
+    }).join('');
+    const parseMin=s=>{const m=s&&s.match(/(\d+)\s*min/);return m?parseInt(m[1]):0;};
+    let remaining=0;
+    regularTasks.forEach((tk,i)=>{ if(!checkedTasks[`${day.date}-${i}`]) remaining+=parseMin(tk.time); });
+    const totalDisplay = totalEntry ? (remaining===0?'done':remaining+' min') : '';
+    const totalHtml = totalEntry ? `<div class="total-row"><span class="total-label">Total study time</span><span class="total-val" id="total-${day.date}">${totalDisplay}</span></div>` : '';
+    return `<div class="day-card${isToday?' today':''}${isExam?' exam-day':''}${isDone?' done':''}" id="card-${day.date}">
+      <div class="day-hdr" onclick="toggleDay('${day.date}')">
+        <div class="day-date">${day.date}</div><div class="day-label">${day.lbl}</div>
+        <div class="day-tags">${tagsHtml}</div>
+        <div class="done-check${isDone?' checked':''}" onclick="event.stopPropagation();toggleDone('${day.date}')" title="Mark done">✓</div>
+        <div class="chevron" id="chev-${day.date}">▼</div>
+      </div>
+      <div class="day-body" id="body-${day.date}">${examHtml}${noteHtml}${aiHtml}<ul class="task-list">${tasksHtml}</ul>${totalHtml}</div>
+    </div>`;
+  }).join('');
+  const todayCard=planData.find(d=>d.date===t&&d.phase===currentPhase);
+  if (todayCard){ const b=document.getElementById('body-'+t), c=document.getElementById('chev-'+t); if(b){b.classList.add('open');c&&c.classList.add('open');} }
+}
+
+function toggleDay(date){
+  const b=document.getElementById('body-'+date), c=document.getElementById('chev-'+date);
+  if (!b) return;
+  const open=b.classList.contains('open');
+  b.classList.toggle('open',!open); c&&c.classList.toggle('open',!open);
+}
+
+function toggleDone(date){
+  checkedDays[date]=!checkedDays[date];
+  const card=document.getElementById('card-'+date), check=card&&card.querySelector('.done-check');
+  if (card) card.classList.toggle('done',checkedDays[date]);
+  if (check) check.classList.toggle('checked',checkedDays[date]);
+
+  const day=planData.find(d=>d.date===date);
+  if (day){
+    const regularTasks=day.tasks.filter(tk=>!tk.total);
+    regularTasks.forEach((_,i)=>{
+      const taskKey=`${date}-${i}`;
+      checkedTasks[taskKey]=checkedDays[date];
+      const li=document.getElementById('task-'+taskKey);
+      const taskCheck=li&&li.querySelector('.task-check');
+      if (li) li.classList.toggle('task-done',checkedDays[date]);
+      if (taskCheck) taskCheck.classList.toggle('checked',checkedDays[date]);
+    });
+    const totalEl=document.getElementById('total-'+date);
+    if (checkedDays[date]){ if(totalEl) totalEl.textContent='done'; }
+    else {
+      const total=regularTasks.reduce((sum,tk)=>{const m=tk.time.match(/(\d+)/);return sum+(m?parseInt(m[1]):0);},0);
+      if (totalEl) totalEl.textContent=total+' min';
+    }
+  }
+  saveAll();
+}
+
+function toggleTask(taskKey){
+  checkedTasks[taskKey]=!checkedTasks[taskKey];
+  const li=document.getElementById('task-'+taskKey), check=li&&li.querySelector('.task-check');
+  if (li) li.classList.toggle('task-done',checkedTasks[taskKey]);
+  if (check) check.classList.toggle('checked',checkedTasks[taskKey]);
+
+  const date=taskKey.substring(0,taskKey.lastIndexOf('-'));
+  const day=planData.find(d=>d.date===date);
+  if (!day) return saveAll();
+
+  const regularTasks=day.tasks.filter(tk=>!tk.total);
+  const totalEntry=day.tasks.find(tk=>tk.total);
+  if (totalEntry){
+    let remaining=0;
+    regularTasks.forEach((tk,i)=>{ const key=`${date}-${i}`; if(!checkedTasks[key]){ const m=tk.time.match(/(\d+)/); remaining+=m?parseInt(m[1]):0; } });
+    const totalEl=document.getElementById('total-'+date);
+    if (totalEl) totalEl.textContent = remaining===0 ? 'done' : remaining+' min';
+  }
+
+  const allDone=regularTasks.every((_,i)=>checkedTasks[`${date}-${i}`]);
+  if (allDone!==!!checkedDays[date]){
+    checkedDays[date]=allDone;
+    const card=document.getElementById('card-'+date), dayCheck=card&&card.querySelector('.done-check');
+    if (card) card.classList.toggle('done',allDone);
+    if (dayCheck) dayCheck.classList.toggle('checked',allDone);
+  }
+  saveAll();
+}
+
+function switchPhase(n){
+  currentPhase=n;
+  document.querySelectorAll('.phase-tab').forEach((t,i)=>t.classList.toggle('active',i+1===n));
+  renderPlan();
+}
+
+/* ---------- chat ---------- */
+async function sendMessage(){
+  const inp=document.getElementById('chatInput');
+  const msg=inp.value.trim(); if(!msg) return;
+  inp.value=''; inp.style.height='auto';
+  addMsg(msg,'user');
+  const thinking=addThinking();
+  document.getElementById('sendBtn').disabled=true;
+
+  const systemPrompt=`You are a study plan assistant for a student prepping for Cambridge Engineering admission.
+Their prep covers ESAT (sitting 12-16 Oct 2026) plus AS Computer Science, AS Physics, and A Level Maths (CIE) retakes in an exam window opening 28 Sept 2026 (exact per-subject dates not yet known). They also do FTC robotics (starts 2 Sept, ~1-2h most weekdays) and climbing (Tue/Thu, not tracked as a task).
+Known fixed dates: school + robotics start 2 Sept 2026; CIE exam window opens 28 Sept 2026 (dates TBC); ESAT sitting 12-16 Oct 2026; UCAS deadline 15 Oct 2026; Cambridge supplementary form 22 Oct 2026; SMC 7 Oct 2026 (light prep only, carved out of Phase 3); BMO1 18 Nov 2026 (only relevant if he qualifies via SMC, not actively scheduled yet).
+Today: ${today()}.
+CONTEXT: his actual June 2026 results were B, B, C (C in Maths) — that's why the retakes are happening. His Physics and Maths teachers have both said they'll predict A* for the year if he works hard through September 2026; predicted grades lock around the Oct 15 UCAS deadline, so September school effort (not just evening revision — visible classroom effort, homework quality) is currently one of the highest-leverage things in this whole plan. There's also a possible predicted A* in Further Maths from his maths teacher, same September-effort condition. His CS teacher is leaving, so he needs to establish predicted-grade expectations with the new CS teacher early in September.
+HARD RULE: after the UCAS deadline (15 Oct 2026), every task on every day must be either AS/A level (CIE) subject revision or robotics — nothing else (no reading, no Personal Statement, no wind tunnel, no general ESAT prep once the ESAT sitting week itself has passed). Those other tasks exist only to support the UCAS application, not AS/A level performance, so they stop once UCAS is submitted.
+Current stats: ${JSON.stringify(stats)}
+Current plan: ${JSON.stringify(planData)}
+Task naming convention: "Subject — Topic: Description" e.g. "Maths — Retake Prep: timed past paper" or "ESAT — Practice: timed section work." Non-subject tasks (robotics, reading, PS, homework, wind tunnel) are plain text, no colon convention required.
+Total study time must be stored as {total:"X min"} as the LAST item in each day's tasks array.
+When the student tells you anything — a grade, skipped sessions, upcoming test, feeling behind — reply with 2-3 sentences max (blunt, no fluff), then replan affected days and update stats if needed.
+ALWAYS output at the very end:
+STATS_UPDATE:${JSON.stringify(stats)}
+PLAN_UPDATE:${JSON.stringify(planData)}
+Rules: same JSON structure, only modify what needs changing, never remove key dates, redistribute missed work sensibly. Stats colors: "var(--maths)" for maths, "var(--physics)" for physics, "var(--cs)" for CS, "var(--esat)" for ESAT, "var(--muted2)" if pct is 0. Task d values: "dm"=maths, "dp"=physics, "dc"=CS, "de"=ESAT, "dr"=other.`;
+
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:8000, system:systemPrompt, messages:[{role:"user",content:msg}] })
+    });
+    const data=await res.json();
+    const text=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('')||'Something went wrong.';
+    const statsIdx=text.indexOf('STATS_UPDATE:');
+    const planIdx=text.indexOf('PLAN_UPDATE:');
+    if (statsIdx!==-1 && planIdx!==-1){
+      try{ stats=JSON.parse(text.substring(statsIdx+13,planIdx).trim()); }catch(e){}
+      try{ planData=JSON.parse(text.substring(planIdx+12).trim()); }catch(e){}
+    } else if (statsIdx!==-1){
+      try{ stats=JSON.parse(text.substring(statsIdx+13).trim()); }catch(e){}
+    }
+    await saveAll(); renderStats(); renderPlan();
+    const clean=text.substring(0, statsIdx!==-1?statsIdx:planIdx!==-1?planIdx:text.length).trim();
+    thinking.remove(); addMsg(clean,'ai');
+  }catch(e){
+    thinking.remove(); addMsg('Error reaching Claude API. Check your connection.','ai');
+  }
+  document.getElementById('sendBtn').disabled=false;
+}
+
+function addMsg(text,type){
+  const el=document.getElementById('chatMessages');
+  const div=document.createElement('div');
+  div.className=`msg msg-${type}`; div.textContent=text;
+  el.appendChild(div); el.scrollTop=el.scrollHeight; return div;
+}
+function addThinking(){
+  const el=document.getElementById('chatMessages');
+  const div=document.createElement('div');
+  div.className='msg-thinking';
+  div.innerHTML='<div class="dot-pulse"></div><div class="dot-pulse"></div><div class="dot-pulse"></div>';
+  el.appendChild(div); el.scrollTop=el.scrollHeight; return div;
+}
+
+document.getElementById('chatInput').addEventListener('input',function(){
+  this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,100)+'px';
+});
+document.getElementById('chatInput').addEventListener('keydown',function(e){
+  if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+});
+document.getElementById('todayBadge').textContent=formatToday();
+
+async function init(){
+  await loadStorage();
+  renderExams(); renderStats(); renderPlan(); renderProgress();
+  const ph=phaseForDate(today());
+  switchPhase(ph?ph.id:1);
+}
+init();
+</script>
+</body>
+</html>
