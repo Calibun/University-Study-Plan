@@ -354,19 +354,19 @@ let checkedTasks={};
 let stats=JSON.parse(JSON.stringify(DEFAULT_STATS));
 let planData=buildPlan();
 
-/* ---------- storage ---------- */
+/* ---------- storage (localStorage — for standalone/GitHub Pages hosting) ---------- */
 async function loadStorage(){
-  try{const r=await window.storage.get('checked_days'); if(r) checkedDays=JSON.parse(r.value);}catch(e){}
-  try{const r=await window.storage.get('checked_tasks'); if(r) checkedTasks=JSON.parse(r.value);}catch(e){}
-  try{const r=await window.storage.get('stats_data'); if(r) stats=JSON.parse(r.value);}catch(e){}
-  try{const r=await window.storage.get('plan_data'); if(r) planData=JSON.parse(r.value);}catch(e){}
+  try{const r=localStorage.getItem('checked_days'); if(r) checkedDays=JSON.parse(r);}catch(e){}
+  try{const r=localStorage.getItem('checked_tasks'); if(r) checkedTasks=JSON.parse(r);}catch(e){}
+  try{const r=localStorage.getItem('stats_data'); if(r) stats=JSON.parse(r);}catch(e){}
+  try{const r=localStorage.getItem('plan_data'); if(r) planData=JSON.parse(r);}catch(e){}
 }
 async function saveAll(){
   renderProgress();
-  try{await window.storage.set('checked_days', JSON.stringify(checkedDays));}catch(e){}
-  try{await window.storage.set('checked_tasks', JSON.stringify(checkedTasks));}catch(e){}
-  try{await window.storage.set('stats_data', JSON.stringify(stats));}catch(e){}
-  try{await window.storage.set('plan_data', JSON.stringify(planData));}catch(e){}
+  try{localStorage.setItem('checked_days', JSON.stringify(checkedDays));}catch(e){}
+  try{localStorage.setItem('checked_tasks', JSON.stringify(checkedTasks));}catch(e){}
+  try{localStorage.setItem('stats_data', JSON.stringify(stats));}catch(e){}
+  try{localStorage.setItem('plan_data', JSON.stringify(planData));}catch(e){}
 }
 
 /* ---------- rendering ---------- */
