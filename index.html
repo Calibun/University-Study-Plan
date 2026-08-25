@@ -1,4 +1,5 @@
 
+ 
 
 Study tracker · HTML
 <!DOCTYPE html>
@@ -314,7 +315,9 @@ function buildPlan(){
       add('dc',"CS — Retake Prep: no ESAT crossover, needs daily protection.",90,'c');
       const alt=(altToggle%2===0)?'m':'p'; altToggle++;
       add(subjectDot[alt],`${subjectName[alt]} — Retake Prep: alternating with ${alt==='m'?'Physics':'Maths'} day to day.`,90,alt);
-      if (isClimb){ add('dr',"Climbing, incl. travel.",120,'r'); }
+      const skipClimbToday=(cur==='2026-08-25');
+      if (skipClimbToday) notesArr.push("Climbing skipped today — slept till 1:30pm after the schedule got knocked off by an early night. Wind Tunnel coding instead.");
+      if (isClimb && !skipClimbToday){ add('dr',"Climbing, incl. travel.",120,'r'); }
       else if (cur<=WIND_TUNNEL_END){
         let wtMin=105, wtSuffix='';
         if (cur==='2026-08-29'){ wtMin=180; wtSuffix=' (+75 top-up, clearing skipped Aug 21–23 sessions)'; }
@@ -420,18 +423,19 @@ let stats=JSON.parse(JSON.stringify(DEFAULT_STATS));
 let planData=buildPlan();
  
 /* ---------- storage ---------- */
+const LS_PREFIX='esat_tracker_';
 async function loadStorage(){
-  try{const r=await window.storage.get('checked_days'); if(r) checkedDays=JSON.parse(r.value);}catch(e){}
-  try{const r=await window.storage.get('checked_tasks'); if(r) checkedTasks=JSON.parse(r.value);}catch(e){}
-  try{const r=await window.storage.get('stats_data'); if(r) stats=JSON.parse(r.value);}catch(e){}
-  try{const r=await window.storage.get('plan_data'); if(r) planData=JSON.parse(r.value);}catch(e){}
+  try{const v=localStorage.getItem(LS_PREFIX+'checked_days'); if(v) checkedDays=JSON.parse(v);}catch(e){}
+  try{const v=localStorage.getItem(LS_PREFIX+'checked_tasks'); if(v) checkedTasks=JSON.parse(v);}catch(e){}
+  try{const v=localStorage.getItem(LS_PREFIX+'stats_data'); if(v) stats=JSON.parse(v);}catch(e){}
+  try{const v=localStorage.getItem(LS_PREFIX+'plan_data'); if(v) planData=JSON.parse(v);}catch(e){}
 }
 async function saveAll(){
   renderProgress();
-  try{await window.storage.set('checked_days', JSON.stringify(checkedDays));}catch(e){}
-  try{await window.storage.set('checked_tasks', JSON.stringify(checkedTasks));}catch(e){}
-  try{await window.storage.set('stats_data', JSON.stringify(stats));}catch(e){}
-  try{await window.storage.set('plan_data', JSON.stringify(planData));}catch(e){}
+  try{localStorage.setItem(LS_PREFIX+'checked_days', JSON.stringify(checkedDays));}catch(e){}
+  try{localStorage.setItem(LS_PREFIX+'checked_tasks', JSON.stringify(checkedTasks));}catch(e){}
+  try{localStorage.setItem(LS_PREFIX+'stats_data', JSON.stringify(stats));}catch(e){}
+  try{localStorage.setItem(LS_PREFIX+'plan_data', JSON.stringify(planData));}catch(e){}
 }
  
 /* ---------- rendering ---------- */
@@ -648,7 +652,7 @@ document.getElementById('todayBadge').textContent=formatToday();
 async function resetToLatest(){
   if (!confirm('This clears all saved progress/checkboxes and reloads the latest built-in plan. Continue?')) return;
   const keys=['checked_days','checked_tasks','stats_data','plan_data'];
-  for (const k of keys){ try{ await window.storage.delete(k); }catch(e){} }
+  for (const k of keys){ try{ localStorage.removeItem(LS_PREFIX+k); }catch(e){} }
   location.reload();
 }
  
