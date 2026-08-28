@@ -1,5 +1,4 @@
 
- 
 
 Study tracker · HTML
 <!DOCTYPE html>
@@ -133,7 +132,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
     <div class="sidebar-top">
       <div class="app-title">Study Plan · ESAT 2026</div>
       <div class="exam-list" id="examList"></div>
-      <div class="tbc-note">Per-subject CIE exam dates TBC — structure below is generic until you have your real timetable.</div>
+      <div class="tbc-note">Zone 3 CIE timetable confirmed — Phase 3/4 prep now follows these exact dates.</div>
       <div class="reset-link" id="resetLink" onclick="resetToLatest()">↺ Reset to latest plan (clears cached progress)</div>
     </div>
     <div class="subject-key">
@@ -197,8 +196,7 @@ const PLAN_END='2026-11-13';
 const DIAGNOSTIC_DAY='2026-08-17';
 const COMPETITION_DAY='2026-08-30';
 const WIND_TUNNEL_END='2026-08-31';
-const ESAT_WEEK_START='2026-10-12';
-const ESAT_WEEK_END='2026-10-16';
+const ESAT_DAY='2026-10-13';
 const UCAS_DEADLINE='2026-10-15';
 const SUPP_DEADLINE='2026-10-22';
 const PS_CUTOFF='2026-09-21';
@@ -216,13 +214,39 @@ const PHASES=[
 ];
 function phaseForDate(str){ for(const p of PHASES){ if(str>=p.start&&str<=p.end) return p; } return null; }
  
+/* Real Zone 3 CIE timetable, confirmed Aug 2026. Note the stacked days:
+   13 Oct = ESAT + Maths P42; 14 Oct = Physics P22 + CS P21; 15 Oct = Maths P32 + UCAS deadline. */
+const EXAM_SCHEDULE=[
+  {date:'2026-09-30', subj:'m', label:'Maths P12'},
+  {date:'2026-10-07', subj:'m', label:'Maths P52'},
+  {date:'2026-10-08', subj:'p', label:'Physics P33'},
+  {date:'2026-10-09', subj:'c', label:'CS P11'},
+  {date:'2026-10-13', subj:'esat', label:'ESAT'},
+  {date:'2026-10-13', subj:'m', label:'Maths P42'},
+  {date:'2026-10-14', subj:'p', label:'Physics P22'},
+  {date:'2026-10-14', subj:'c', label:'CS P21'},
+  {date:'2026-10-15', subj:'m', label:'Maths P32'},
+  {date:'2026-10-22', subj:'p', label:'Physics P34'},
+  {date:'2026-11-10', subj:'p', label:'Physics P12'},
+];
+function examsOn(d){ return EXAM_SCHEDULE.filter(e=>e.date===d); }
+function upcomingQueue(d){ return EXAM_SCHEDULE.filter(e=>e.date>d).sort((a,b)=>a.date<b.date?-1:(a.date>b.date?1:0)); }
+ 
 const EXAMS=[
-  {short:"School — Term Starts",date:"2026-09-02"},
-  {short:"Exam Window — Opens (dates TBC)",date:"2026-09-28"},
-  {short:"ESAT — Sitting Window",date:"2026-10-12"},
+  {short:"Maths — Paper 12",date:"2026-09-30"},
+  {short:"Maths — Paper 52",date:"2026-10-07"},
+  {short:"SMC",date:"2026-10-07"},
+  {short:"Physics — Paper 33",date:"2026-10-08"},
+  {short:"CS — Paper 11",date:"2026-10-09"},
+  {short:"ESAT",date:"2026-10-13"},
+  {short:"Maths — Paper 42",date:"2026-10-13"},
+  {short:"Physics — Paper 22",date:"2026-10-14"},
+  {short:"CS — Paper 21",date:"2026-10-14"},
+  {short:"Maths — Paper 32",date:"2026-10-15"},
   {short:"UCAS — Application Deadline",date:"2026-10-15"},
   {short:"Cambridge — Supplementary Form",date:"2026-10-22"},
-  {short:"Exam Window — Closes (approx)",date:"2026-11-13"},
+  {short:"Physics — Paper 34",date:"2026-10-22"},
+  {short:"Physics — Paper 12",date:"2026-11-10"},
 ];
  
 const DEFAULT_STATS=[
@@ -269,6 +293,24 @@ const HIST_ACTUALS={
     ['dp',"Physics — Retake Prep: alternating with Maths day to day.",90,'p']
   ],note:"Wind Tunnel + Reading (150 min) didn't happen — same."},
   '2026-08-24':{tasks:[],note:"Nothing got done — the full day (585 min: ESAT Maths, ESAT Physics, CS, Maths retake, Wind Tunnel, Reading, PS) is covered by the Aug 30 catch-up day."},
+  '2026-08-25':{tasks:[
+    ['de',"ESAT — Maths: content/technique.",90,'esat'],
+    ['de',"ESAT — Physics: content/technique.",90,'esat'],
+    ['dc',"CS — Retake Prep.",90,'c'],
+    ['dp',"Physics — Retake Prep.",90,'p'],
+    ['dr',"Wind Tunnel — coding.",105,'r']
+  ],note:"Climbing skipped (slept till 1:30pm) — Wind Tunnel coding done instead. Everything else got done; only reading slipped, and that's not worth doubling up on later."},
+  '2026-08-26':{tasks:[
+    ['de',"ESAT — Maths: content/technique.",90,'esat'],
+    ['de',"ESAT — Physics: content/technique.",90,'esat'],
+    ['dc',"CS — Retake Prep.",90,'c'],
+    ['dm',"Maths — Retake Prep.",90,'m']
+  ],note:"Late start — the four core prep blocks got done. Wind Tunnel/Reading/PS slipped and aren't being re-added here: Wind Tunnel time is picked up on the 29th/31st below, and Reading/PS both still have slack before they actually matter."},
+  '2026-08-27':{tasks:[],note:"Brother's birthday — full day with family, then evening with friends. Legitimate day off, nothing carried over from it."},
+  '2026-08-28':{tasks:[
+    ['dm',"Maths — Retake Prep: start here.",60,'m'],
+    ['de',"ESAT — Physics: one section, kept short.",45,'esat']
+  ],note:"Starting at 5pm — keeping today deliberately light instead of cramming the full list in. Leading with Maths, not CS: opening on something you actually want to do beats opening with CS every time."},
 };
  
 const tagLabel={m:"maths",p:"physics",c:"comp sci",esat:"ESAT",r:"other",e:"key date"};
@@ -310,29 +352,30 @@ function buildPlan(){
       notesArr.push(HIST_ACTUALS[cur].note);
       HIST_ACTUALS[cur].tasks.forEach(([d,t,mins,tag])=>add(d,t,mins,tag));
     } else if (phase===1){
-      add('de',"ESAT — Maths: content/technique early in the phase, ramping to timed sections by end of August.",90,'esat');
-      add('de',"ESAT — Physics: content/technique early in the phase, ramping to timed sections by end of August.",90,'esat');
-      add('dc',"CS — Retake Prep: no ESAT crossover, needs daily protection.",90,'c');
       const alt=(altToggle%2===0)?'m':'p'; altToggle++;
-      add(subjectDot[alt],`${subjectName[alt]} — Retake Prep: alternating with ${alt==='m'?'Physics':'Maths'} day to day.`,90,alt);
-      const skipClimbToday=(cur==='2026-08-25');
-      if (skipClimbToday) notesArr.push("Climbing skipped today — slept till 1:30pm after the schedule got knocked off by an early night. Wind Tunnel coding instead.");
-      if (isClimb && !skipClimbToday){ add('dr',"Climbing, incl. travel.",120,'r'); }
+      add(subjectDot[alt],`${subjectName[alt]} — Retake Prep: start here — momentum first, before ESAT/CS.`,90,alt);
+      add('de',"ESAT — Maths: content/technique early in the phase, ramping to timed sections by end of August.",75,'esat');
+      add('de',"ESAT — Physics: content/technique early in the phase, ramping to timed sections by end of August.",75,'esat');
+      add('dc',"CS — Retake Prep: kept short and mid-session, not the first thing you open.",60,'c');
+      if (isClimb){ add('dr',"Climbing, incl. travel.",120,'r'); }
       else if (cur<=WIND_TUNNEL_END){
         let wtMin=105, wtSuffix='';
-        if (cur==='2026-08-29'){ wtMin=180; wtSuffix=' (+75 top-up, clearing skipped Aug 21–23 sessions)'; }
-        else if (cur==='2026-08-31'){ wtMin=195; wtSuffix=' (+90 top-up, clearing skipped sessions — last day before the deadline)'; }
+        if (cur==='2026-08-29'){ wtMin=150; wtSuffix=' (+45 top-up — not fully recovering the Aug 21–23/26 gaps, retake prep matters more right now)'; }
+        else if (cur==='2026-08-31'){ wtMin=165; wtSuffix=' (+60 top-up, last day before the deadline — good enough beats perfect here)'; }
         add('dr',`Wind Tunnel — physical build/print/sensors at home, or CFD/OpenFOAM if you're away.${wtSuffix}`,wtMin,'r');
       }
       add('dr',"Reading.",45,'r');
       if ([1,3,5].includes(dow) && cur!=='2026-08-31') add('dr',"Personal Statement session.",75,'r');
     } else if (phase===2||phase===4){
       notesArr.push('School 8:00–16:00.');
-      if (!isWeekend) add('dr',"Robotics — team session.",90,'r');
+      const todaysExams = phase===4 ? examsOn(cur) : [];
+      if (!isWeekend && todaysExams.length===0) add('dr',"Robotics — team session.",90,'r');
       if (cur===CS_TEACHER_TALK) add('dr',"CS — talk to the new teacher about predicted-grade expectations for the year. Do this early.",15,'r');
       if (cur==='2026-09-02') add('dr',"Wind Tunnel — final wrap-up, spillover from the missed August sessions.",60,'r');
  
-      if (isWeekend){
+      if (phase===4 && todaysExams.length>0){
+        examArr.push(`${todaysExams.map(e=>e.label).join(' + ')} today. Protect the day — nothing else scheduled.`);
+      } else if (isWeekend){
         if (phase===2){
           add('de',"ESAT — Mock: full timed section, 120 min, no calculator, real conditions.",120,'esat');
           ROT.forEach(s=>add(subjectDot[s],`${subjectName[s]} — Retake Prep: catch-up / weak-topic focus.`,60,s));
@@ -340,9 +383,9 @@ function buildPlan(){
           add('dr',"Reading.",45,'r');
           if (dow===0 && cur<=PS_CUTOFF) add('dr',"Personal Statement session.",75,'r');
         } else {
-          const s1=ROT[rotIdx%3], s2=ROT[(rotIdx+1)%3]; rotIdx+=2;
-          add(subjectDot[s1],`${subjectName[s1]} — Retake Prep: timed past paper, or whichever's soonest on your real timetable.`,135,s1);
-          add(subjectDot[s2],`${subjectName[s2]} — Retake Prep: timed past paper, or whichever's soonest on your real timetable.`,135,s2);
+          const queue=upcomingQueue(cur);
+          if (queue.length) add(subjectDot[queue[0].subj],`${queue[0].label} prep: timed past paper. Maths and CS are done — this is the only exam left.`,180,queue[0].subj);
+          else add('dr',"General review — no papers left on the schedule, use this flexibly (interview prep is fair game now).",90,'r');
         }
       } else if (isClimb){
         notesArr.push('Robotics + climbing both today — maintenance day, not a study day.');
@@ -358,38 +401,47 @@ function buildPlan(){
           }
           add('dr',"Homework — do it properly. Predicted grades are partly built on this, not just papers at home.",40,'r');
         } else {
-          const s=ROT[rotIdx%3]; rotIdx++;
-          add(subjectDot[s],`${subjectName[s]} — Retake Prep: timed past paper, or whichever remains soonest on your timetable.`,150,s);
+          const queue=upcomingQueue(cur);
+          if (queue.length) add(subjectDot[queue[0].subj],`${queue[0].label} prep: timed past paper.`,150,queue[0].subj);
+          else add('dr',"General review — no papers left, use this flexibly.",90,'r');
           add('dr',"Homework.",30,'r');
         }
       }
       if (phase===4 && cur===SUPP_DEADLINE) examArr.push('"My Cambridge Application" supplementary form due today, 6pm — separate from UCAS, easy to lose track of mid-exams.');
-      if (phase===4 && cur===PLAN_END) notesArr.push('Exam window should be wrapping up around here — adjust once your real dates are confirmed. If SMC results qualify you, BMO1 is Nov 18 — outside this tracker for now, revisit once exams wrap.');
+      if (phase===4 && cur===PLAN_END) notesArr.push('Exam window wraps up around here. If SMC results qualify you, BMO1 is Nov 18 — outside this tracker for now, revisit once exams wrap.');
     } else if (phase===3){
       notesArr.push('School 8:00–16:00.');
-      if (!isWeekend) add('dr',"Robotics — team session.",90,'r');
+      const todaysExams=examsOn(cur);
+      const smcToday=(cur===SMC_DAY);
+      if (!isWeekend && todaysExams.length===0) add('dr',"Robotics — team session.",90,'r');
       if (cur==='2026-09-28') notesArr.push('Personal Statement should be ~95% done by now — proofread + final checks only from here, no task logged.');
-      if (cur===SMC_PREP_1 || cur===SMC_PREP_2) add('dm',"Maths — SMC Prep: light past-question practice, Q15–25 range. Keep it brief, ESAT/CIE still lead.",30,'m');
-      if (cur===SMC_DAY) notesArr.push('SMC today — 90 min, sat at school. Back to ESAT/CIE as normal once it\'s done, no extra prep needed beforehand.');
-      if (cur==='2026-10-10' && cur<UCAS_DEADLINE) examArr.push('Target: submit the Personal Statement around now — ahead of the 15th, clear of ESAT week.');
+      if (cur==='2026-10-10' && cur<UCAS_DEADLINE) examArr.push('Target: submit the Personal Statement around now — ahead of the 15th, clear of the exam stack.');
+      if (cur===SMC_PREP_1 || cur===SMC_PREP_2) add('dm',"Maths — SMC Prep: light past-question practice, Q15–25 range. Keep it brief, exams still lead.",30,'m');
  
-      if (cur>=ESAT_WEEK_START && cur<=ESAT_WEEK_END){
-        examArr.push('ESAT week — light touch only. Past-paper review, nothing new. Protect your energy for the sitting.');
-        notesArr.push('Robotics should be scaled back this week — worth confirming with your team lead in advance.');
+      if (todaysExams.length>0 || smcToday){
+        const labels=todaysExams.map(e=>e.label);
+        if (smcToday) labels.push('SMC (90 min, sat at school)');
+        examArr.push(`${labels.join(' + ')} today. Protect the whole day — nothing else scheduled.`);
         if (cur===UCAS_DEADLINE) examArr.push('UCAS deadline today, 6pm — everything except AS/A level revision and robotics stops from here on.');
-        add('de',"ESAT — Light Review: papers you've already done, mark schemes only.",45,'esat');
+        if (todaysExams.length===1 && !smcToday && todaysExams[0].subj!=='esat'){
+          add('dr',"Light review only if there's genuinely spare energy left after the exam. Don't force it.",30,'r');
+        }
       } else if (isWeekend){
-        if (cur<ESAT_WEEK_START) add('de',"ESAT — Mock: full timed section, real conditions.",120,'esat');
-        const s=ROT[rotIdx%3]; rotIdx++;
-        add(subjectDot[s],`${subjectName[s]} — Retake Prep: timed past paper, or whichever's soonest on your real timetable.`,180,s);
+        if (cur<ESAT_DAY) add('de',"ESAT — Mock: full timed section, real conditions.",120,'esat');
+        const queue=upcomingQueue(cur).filter(e=>e.subj!=='esat');
+        const primary=queue[0], secondary=queue.find(e=>e.subj!==primary?.subj);
+        if (primary) add(subjectDot[primary.subj],`${primary.label} prep: timed past paper. Soonest exam, top priority.`,150,primary.subj);
+        if (secondary) add(subjectDot[secondary.subj],`${secondary.label} prep: keep it warm while ${subjectName[primary.subj]} is closest.`,60,secondary.subj);
         if (cur<UCAS_DEADLINE) add('dr',"Reading, only if book 2 slipped.",20,'r');
       } else if (isClimb){
         notesArr.push("Recovery day — light review only if there's time.");
         add('dr',"Light past-paper set, optional.",30,'r');
       } else {
-        const s=ROT[rotIdx%3]; rotIdx++;
-        add(subjectDot[s],`${subjectName[s]} — Retake Prep: timed past paper, or whichever's soonest on your actual timetable.`,120,s);
-        if (cur<ESAT_WEEK_START) add('de',"ESAT — Timed Section: keep pace sharp.",60,'esat');
+        const queue=upcomingQueue(cur).filter(e=>e.subj!=='esat');
+        const primary=queue[0], secondary=queue.find(e=>e.subj!==primary?.subj);
+        if (primary) add(subjectDot[primary.subj],`${primary.label} prep: timed past paper. Soonest exam, top priority.`,105,primary.subj);
+        if (secondary) add(subjectDot[secondary.subj],`${secondary.label} prep: keep it warm.`,45,secondary.subj);
+        if (cur<ESAT_DAY) add('de',"ESAT — Timed Section: keep pace sharp.",45,'esat');
       }
     }
  
@@ -409,7 +461,7 @@ function buildPlan(){
 }
  
 let currentPhase=1;
-let checkedDays={'2026-08-17':true,'2026-08-18':true,'2026-08-19':true,'2026-08-20':true,'2026-08-21':true,'2026-08-22':true,'2026-08-23':true};
+let checkedDays={'2026-08-17':true,'2026-08-18':true,'2026-08-19':true,'2026-08-20':true,'2026-08-21':true,'2026-08-22':true,'2026-08-23':true,'2026-08-25':true,'2026-08-26':true};
 let checkedTasks={
   '2026-08-17-0':true,'2026-08-17-1':true,'2026-08-17-2':true,'2026-08-17-3':true,
   '2026-08-18-0':true,'2026-08-18-1':true,'2026-08-18-2':true,'2026-08-18-3':true,'2026-08-18-4':true,'2026-08-18-5':true,
@@ -417,7 +469,9 @@ let checkedTasks={
   '2026-08-20-0':true,'2026-08-20-1':true,'2026-08-20-2':true,'2026-08-20-3':true,'2026-08-20-4':true,
   '2026-08-21-0':true,'2026-08-21-1':true,'2026-08-21-2':true,'2026-08-21-3':true,'2026-08-21-4':true,
   '2026-08-22-0':true,'2026-08-22-1':true,'2026-08-22-2':true,'2026-08-22-3':true,
-  '2026-08-23-0':true,'2026-08-23-1':true,'2026-08-23-2':true,'2026-08-23-3':true
+  '2026-08-23-0':true,'2026-08-23-1':true,'2026-08-23-2':true,'2026-08-23-3':true,
+  '2026-08-25-0':true,'2026-08-25-1':true,'2026-08-25-2':true,'2026-08-25-3':true,'2026-08-25-4':true,
+  '2026-08-26-0':true,'2026-08-26-1':true,'2026-08-26-2':true,'2026-08-26-3':true
 };
 let stats=JSON.parse(JSON.stringify(DEFAULT_STATS));
 let planData=buildPlan();
@@ -588,11 +642,11 @@ async function sendMessage(){
   document.getElementById('sendBtn').disabled=true;
  
   const systemPrompt=`You are a study plan assistant for a student prepping for Cambridge Engineering admission.
-Their prep covers ESAT (sitting 12-16 Oct 2026) plus AS Computer Science, AS Physics, and A Level Maths (CIE) retakes in an exam window opening 28 Sept 2026 (exact per-subject dates not yet known). They also do FTC robotics (starts 2 Sept, ~1-2h most weekdays) and climbing (Tue/Thu, not tracked as a task).
-Known fixed dates: school + robotics start 2 Sept 2026; CIE exam window opens 28 Sept 2026 (dates TBC); ESAT sitting 12-16 Oct 2026; UCAS deadline 15 Oct 2026; Cambridge supplementary form 22 Oct 2026; SMC 7 Oct 2026 (light prep only, carved out of Phase 3); BMO1 18 Nov 2026 (only relevant if he qualifies via SMC, not actively scheduled yet).
+Their prep covers ESAT (sitting 13 Oct 2026, single day) plus AS Computer Science (9618), AS Physics (9702), and A Level Maths (9709) CIE retakes, with a confirmed Zone 3 timetable: Maths P12 30 Sept; Maths P52 7 Oct (same day as SMC); Physics P33 8 Oct; CS P11 9 Oct; ESAT + Maths P42 13 Oct (stacked); Physics P22 + CS P21 14 Oct (stacked); Maths P32 15 Oct (same day as UCAS deadline); Physics P34 22 Oct (same day as the Cambridge supplementary form); Physics P12 10 Nov. Maths and CS are fully finished after 15 Oct — only Physics papers remain after that (22 Oct, 10 Nov). They also do FTC robotics (starts 2 Sept, ~1-2h most weekdays) and climbing (Tue/Thu, not tracked as a task).
+Known fixed dates: school + robotics start 2 Sept 2026; UCAS deadline 15 Oct 2026; Cambridge supplementary form 22 Oct 2026; SMC 7 Oct 2026 (light prep only, he's confirmed he's still sitting it despite the Maths P52 clash that day); BMO1 18 Nov 2026 (only relevant if he qualifies via SMC, not actively scheduled yet). On any date with more than one exam/sitting, that day should be protected — no other tasks logged.
 Today: ${today()}.
 CONTEXT: his actual June 2026 results were B, B, C (C in Maths) — that's why the retakes are happening. His Physics and Maths teachers have both said they'll predict A* for the year if he works hard through September 2026; predicted grades lock around the Oct 15 UCAS deadline, so September school effort (not just evening revision — visible classroom effort, homework quality) is currently one of the highest-leverage things in this whole plan. There's also a possible predicted A* in Further Maths from his maths teacher, same September-effort condition. His CS teacher is leaving, so he needs to establish predicted-grade expectations with the new CS teacher early in September.
-HARD RULE: after the UCAS deadline (15 Oct 2026), every task on every day must be either AS/A level (CIE) subject revision or robotics — nothing else (no reading, no Personal Statement, no wind tunnel, no general ESAT prep once the ESAT sitting week itself has passed). Those other tasks exist only to support the UCAS application, not AS/A level performance, so they stop once UCAS is submitted.
+HARD RULE: after the UCAS deadline (15 Oct 2026), every task on every day must be either AS/A level (CIE) subject revision or robotics — nothing else (no reading, no Personal Statement, no wind tunnel, no general ESAT prep once ESAT (13 Oct) has been sat). Those other tasks exist only to support the UCAS application, not AS/A level performance, so they stop once UCAS is submitted. Also note Maths and CS are done after 15 Oct — from then on only Physics tasks should appear among the CIE subjects.
 Current stats: ${JSON.stringify(stats)}
 Current plan: ${JSON.stringify(planData)}
 Task naming convention: "Subject — Topic: Description" e.g. "Maths — Retake Prep: timed past paper" or "ESAT — Practice: timed section work." Non-subject tasks (robotics, reading, PS, homework, wind tunnel) are plain text, no colon convention required.
@@ -667,6 +721,8 @@ init();
 </body>
 </html>
  
+
+
 
 
 
