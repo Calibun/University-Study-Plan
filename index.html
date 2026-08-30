@@ -343,12 +343,9 @@ function buildPlan(){
       add('dc',"CS — Diagnostic: past paper, cold, timed, no notes.",60,'c');
       add('de',"ESAT — Diagnostic: one specimen section, timed, if you have one to hand.",45,'esat');
     } else if (cur===COMPETITION_DAY){
-      notesArr.push("No competition after all — using it to cover the Aug 24 backlog (the one day nothing got done).");
-      add('de',"ESAT — Maths: catch-up timed section, backlog from Aug 24.",90,'esat');
-      add('de',"ESAT — Physics: catch-up timed section, backlog from Aug 24.",90,'esat');
-      add('dc',"CS — Retake Prep: catch-up past paper, backlog from Aug 24.",90,'c');
-      add('dm',"Maths — Retake Prep: catch-up, backlog from Aug 24.",60,'m');
-      add('dp',"Physics — Retake Prep: catch-up, backlog from Aug 24.",60,'p');
+      notesArr.push("Brother's bday party ran 12–6, and you're heading to your dad's around 9/10 tonight — barely any window left. Kept it to two short blocks instead of cramming the Aug 24 backlog in. That backlog stays unaddressed for now, not worth forcing.");
+      add('de',"ESAT — Maths: quick timed section, short and focused.",60,'esat');
+      add('dm',"Maths — Retake Prep: light session, whatever you can get done before you leave.",60,'m');
     } else if (HIST_ACTUALS[cur]){
       notesArr.push(HIST_ACTUALS[cur].note);
       HIST_ACTUALS[cur].tasks.forEach(([d,t,mins,tag])=>add(d,t,mins,tag));
@@ -722,8 +719,6 @@ init();
 </body>
 </html>
  
-
-
 
 
 
