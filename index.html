@@ -273,7 +273,7 @@ const HIST_ACTUALS={
     ['de',"ESAT — Physics: content/technique early in the phase, ramping to timed sections by end of August.",90,'esat'],
     ['dc',"CS — Retake Prep: no ESAT crossover, needs daily protection.",90,'c'],
     ['dm',"Maths — Retake Prep: alternating with Physics day to day.",90,'m'],
-    ['dr',"Climbing, incl. travel.",120,'r']
+    ['dr',"Climbing, incl. travel.",180,'r']
   ],note:"Reading (45 min) didn't happen — same, no dedicated makeup."},
   '2026-08-21':{tasks:[
     ['de',"ESAT — Maths: content/technique early in the phase, ramping to timed sections by end of August.",90,'esat'],
@@ -362,7 +362,7 @@ function buildPlan(){
       add('de',"ESAT — Maths: content/technique early in the phase, ramping to timed sections by end of August.",75,'esat');
       add('de',"ESAT — Physics: content/technique early in the phase, ramping to timed sections by end of August.",75,'esat');
       add('dc',"CS — Retake Prep: kept short and mid-session, not the first thing you open.",60,'c');
-      if (isClimb){ add('dr',"Climbing, incl. travel.",120,'r'); }
+      if (isClimb){ add('dr',"Climbing, incl. travel.",180,'r'); }
       else if (cur<=WIND_TUNNEL_END){
         let wtMin=105, wtSuffix='';
         if (cur==='2026-08-29'){ wtMin=150; wtSuffix=' (+45 top-up — not fully recovering the Aug 21–23/26 gaps, retake prep matters more right now)'; }
@@ -405,7 +405,7 @@ function buildPlan(){
           add('dr',"Light past-paper set only if there's genuinely time left. Don't force it.",30,'r');
         } else {
           notesArr.push("Climbing today, but robotics isn't running yet (starts the 12th) — no reason to go light. Built around climbing instead of robotics, same as any other weekday.");
-          add('dr',"Climbing, incl. travel.",120,'r');
+          add('dr',"Climbing, incl. travel.",180,'r');
           add('de',"ESAT — Practice: timed section work.",90,'esat');
           const s=ROT[rotIdx%3]; rotIdx++;
           add(subjectDot[s],`${subjectName[s]} — Retake Prep.`,60,s);
