@@ -205,6 +205,8 @@ const SMC_PREP_1='2026-10-03';
 const SMC_PREP_2='2026-10-05';
 const BMO1_DAY='2026-11-18';
 const CS_TEACHER_TALK='2026-09-02';
+const ROBOTICS_START='2026-09-12';
+const ROBOTICS_PRESEASON_LESSON='2026-09-04';
  
 const PHASES=[
   {id:1,start:'2026-08-17',end:'2026-09-01'},
@@ -312,6 +314,14 @@ const HIST_ACTUALS={
     ['de',"ESAT — Physics: one section, kept short.",45,'esat'],
     ['dr',"Reading.",45,'r']
   ],note:"Starting at 5pm — keeping today deliberately light instead of cramming the full list in. Leading with Maths, not CS: opening on something you actually want to do beats opening with CS every time."},
+  '2026-09-02':{tasks:[
+    ['dp',"Physics — Retake Prep: extra session — robotics doesn't start till the 12th, this slot's free till then.",90,'p'],
+    ['dr',"CS — talk to the new teacher about predicted-grade expectations for the year.",15,'r'],
+    ['dr',"Wind Tunnel — final wrap-up, spillover from the missed August sessions.",60,'r'],
+    ['de',"ESAT — Practice: timed section work.",105,'esat'],
+    ['dm',"Maths — Retake Prep.",75,'m'],
+    ['dr',"Homework — do it properly. Predicted grades are partly built on this, not just papers at home.",40,'r']
+  ],note:"First day back. Robotics team session wasn't real — season doesn't start till the 12th (Fri 4th is the one exception, there's an after-school lesson that day) — swapped that slot for extra Physics instead. CS chat, ESAT, and homework are done; Wind Tunnel wrap-up and Maths retake still outstanding today."},
 };
  
 const tagLabel={m:"maths",p:"physics",c:"comp sci",esat:"ESAT",r:"other",e:"key date"};
@@ -367,7 +377,14 @@ function buildPlan(){
     } else if (phase===2||phase===4){
       notesArr.push('School 8:00–16:00.');
       const todaysExams = phase===4 ? examsOn(cur) : [];
-      if (!isWeekend && todaysExams.length===0) add('dr',"Robotics — team session.",90,'r');
+      const roboticsOn = cur>=ROBOTICS_START || cur===ROBOTICS_PRESEASON_LESSON;
+      if (!isWeekend && todaysExams.length===0 && roboticsOn){
+        add('dr', (cur===ROBOTICS_PRESEASON_LESSON && cur<ROBOTICS_START) ? "Robotics — after-school lesson (pre-season, one-off before the 12th)." : "Robotics — team session.", 90, 'r');
+      } else if (!isWeekend && todaysExams.length===0 && !isClimb){
+        const s=ROT2[rotIdx%4]; rotIdx++;
+        const desc = s==='fm' ? `${subjectName[s]} — Prep: extra session — robotics doesn't start till the 12th, this slot's free till then.` : `${subjectName[s]} — Retake Prep: extra session — robotics doesn't start till the 12th, this slot's free till then.`;
+        add(subjectDot[s], desc, 90, s==='fm'?'m':s);
+      }
       if (cur===CS_TEACHER_TALK) add('dr',"CS — talk to the new teacher about predicted-grade expectations for the year. Do this early.",15,'r');
       if (cur==='2026-09-02') add('dr',"Wind Tunnel — final wrap-up, spillover from the missed August sessions.",60,'r');
  
@@ -386,7 +403,8 @@ function buildPlan(){
           else add('dr',"General review — no papers left on the schedule, use this flexibly (interview prep is fair game now).",90,'r');
         }
       } else if (isClimb){
-        notesArr.push('Robotics + climbing both today — maintenance day, not a study day.');
+        if (roboticsOn) notesArr.push('Robotics + climbing both today — maintenance day, not a study day.');
+        else notesArr.push('Climbing today — maintenance day, not a study day. No robotics yet, season starts the 12th.');
         add('dr',"Light past-paper set only if there's genuinely time left. Don't force it.",30,'r');
       } else {
         if (phase===2){
@@ -399,9 +417,8 @@ function buildPlan(){
           }
           add('dr',"Homework — do it properly. Predicted grades are partly built on this, not just papers at home.",40,'r');
         } else {
-          const queue=upcomingQueue(cur);
-          if (queue.length) add(subjectDot[queue[0].subj],`${queue[0].label} prep: timed past paper.`,150,queue[0].subj);
-          else add('dr',"General review — no papers left, use this flexibly.",90,'r');
+          const s=ROT[rotIdx%3]; rotIdx++;
+          add(subjectDot[s],`${subjectName[s]} — Retake Prep: timed past paper, or whichever remains soonest on your timetable.`,150,s);
           add('dr',"Homework.",30,'r');
         }
       }
@@ -469,7 +486,8 @@ let checkedTasks={
   '2026-08-22-0':true,'2026-08-22-1':true,'2026-08-22-2':true,'2026-08-22-3':true,
   '2026-08-23-0':true,'2026-08-23-1':true,'2026-08-23-2':true,'2026-08-23-3':true,
   '2026-08-25-0':true,'2026-08-25-1':true,'2026-08-25-2':true,'2026-08-25-3':true,'2026-08-25-4':true,
-  '2026-08-26-0':true,'2026-08-26-1':true,'2026-08-26-2':true,'2026-08-26-3':true
+  '2026-08-26-0':true,'2026-08-26-1':true,'2026-08-26-2':true,'2026-08-26-3':true,
+  '2026-09-02-1':true,'2026-09-02-3':true,'2026-09-02-5':true
 };
 let stats=JSON.parse(JSON.stringify(DEFAULT_STATS));
 let planData=buildPlan();
@@ -640,8 +658,8 @@ async function sendMessage(){
   document.getElementById('sendBtn').disabled=true;
  
   const systemPrompt=`You are a study plan assistant for a student prepping for Cambridge Engineering admission.
-Their prep covers ESAT (sitting 13 Oct 2026, single day) plus AS Computer Science (9618), AS Physics (9702), and A Level Maths (9709) CIE retakes, with a confirmed Zone 3 timetable: Maths P12 30 Sept; Maths P52 7 Oct (same day as SMC); Physics P33 8 Oct; CS P11 9 Oct; ESAT + Maths P42 13 Oct (stacked); Physics P22 + CS P21 14 Oct (stacked); Maths P32 15 Oct (same day as UCAS deadline); Physics P34 22 Oct (same day as the Cambridge supplementary form); Physics P12 10 Nov. Maths and CS are fully finished after 15 Oct — only Physics papers remain after that (22 Oct, 10 Nov). They also do FTC robotics (starts 2 Sept, ~1-2h most weekdays) and climbing (Tue/Thu, not tracked as a task).
-Known fixed dates: school + robotics start 2 Sept 2026; UCAS deadline 15 Oct 2026; Cambridge supplementary form 22 Oct 2026; SMC 7 Oct 2026 (light prep only, he's confirmed he's still sitting it despite the Maths P52 clash that day); BMO1 18 Nov 2026 (only relevant if he qualifies via SMC, not actively scheduled yet). On any date with more than one exam/sitting, that day should be protected — no other tasks logged.
+Their prep covers ESAT (sitting 13 Oct 2026, single day) plus AS Computer Science (9618), AS Physics (9702), and A Level Maths (9709) CIE retakes, with a confirmed Zone 3 timetable: Maths P12 30 Sept; Maths P52 7 Oct (same day as SMC); Physics P33 8 Oct; CS P11 9 Oct; ESAT + Maths P42 13 Oct (stacked); Physics P22 + CS P21 14 Oct (stacked); Maths P32 15 Oct (same day as UCAS deadline); Physics P34 22 Oct (same day as the Cambridge supplementary form); Physics P12 10 Nov. Maths and CS are fully finished after 15 Oct — only Physics papers remain after that (22 Oct, 10 Nov). They also do FTC robotics (season starts 12 Sept, ~1-2h most weekdays from then; one pre-season after-school lesson on 4 Sept only, otherwise that slot is free for extra revision until the season kicks off) and climbing (Tue/Thu, not tracked as a task).
+Known fixed dates: school starts 2 Sept 2026; robotics season starts 12 Sept 2026 (one pre-season lesson on 4 Sept only); UCAS deadline 15 Oct 2026; Cambridge supplementary form 22 Oct 2026; SMC 7 Oct 2026 (light prep only, he's confirmed he's still sitting it despite the Maths P52 clash that day); BMO1 18 Nov 2026 (only relevant if he qualifies via SMC, not actively scheduled yet). On any date with more than one exam/sitting, that day should be protected — no other tasks logged.
 Today: ${today()}.
 CONTEXT: his actual June 2026 results were B, B, C (C in Maths) — that's why the retakes are happening. His Physics and Maths teachers have both said they'll predict A* for the year if he works hard through September 2026; predicted grades lock around the Oct 15 UCAS deadline, so September school effort (not just evening revision — visible classroom effort, homework quality) is currently one of the highest-leverage things in this whole plan. There's also a possible predicted A* in Further Maths from his maths teacher, same September-effort condition. His CS teacher is leaving, so he needs to establish predicted-grade expectations with the new CS teacher early in September.
 HARD RULE: after the UCAS deadline (15 Oct 2026), every task on every day must be either AS/A level (CIE) subject revision or robotics — nothing else (no reading, no Personal Statement, no wind tunnel, no general ESAT prep once ESAT (13 Oct) has been sat). Those other tasks exist only to support the UCAS application, not AS/A level performance, so they stop once UCAS is submitted. Also note Maths and CS are done after 15 Oct — from then on only Physics tasks should appear among the CIE subjects.
@@ -719,6 +737,8 @@ init();
 </body>
 </html>
  
+
+
 
 
 
