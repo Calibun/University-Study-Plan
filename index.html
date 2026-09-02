@@ -315,13 +315,10 @@ const HIST_ACTUALS={
     ['dr',"Reading.",45,'r']
   ],note:"Starting at 5pm — keeping today deliberately light instead of cramming the full list in. Leading with Maths, not CS: opening on something you actually want to do beats opening with CS every time."},
   '2026-09-02':{tasks:[
-    ['dp',"Physics — Retake Prep: extra session — robotics doesn't start till the 12th, this slot's free till then.",90,'p'],
     ['dr',"CS — talk to the new teacher about predicted-grade expectations for the year.",15,'r'],
-    ['dr',"Wind Tunnel — final wrap-up, spillover from the missed August sessions.",60,'r'],
     ['de',"ESAT — Practice: timed section work.",105,'esat'],
-    ['dm',"Maths — Retake Prep.",75,'m'],
     ['dr',"Homework — do it properly. Predicted grades are partly built on this, not just papers at home.",40,'r']
-  ],note:"First day back. Robotics team session wasn't real — season doesn't start till the 12th (Fri 4th is the one exception, there's an after-school lesson that day) — swapped that slot for extra Physics instead. CS chat, ESAT, and homework are done; Wind Tunnel wrap-up and Maths retake still outstanding today."},
+  ],note:"First day back — CS chat, ESAT, and homework done. Robotics was never real today anyway (season starts the 12th). Physics, Wind Tunnel wrap-up, and Maths didn't happen tonight — moved to Sept 3 (Wind Tunnel), Sept 7 (Maths), and Sept 8 (Physics) instead of cramming it all in late."},
 };
  
 const tagLabel={m:"maths",p:"physics",c:"comp sci",esat:"ESAT",r:"other",e:"key date"};
@@ -403,9 +400,19 @@ function buildPlan(){
           else add('dr',"General review — no papers left on the schedule, use this flexibly (interview prep is fair game now).",90,'r');
         }
       } else if (isClimb){
-        if (roboticsOn) notesArr.push('Robotics + climbing both today — maintenance day, not a study day.');
-        else notesArr.push('Climbing today — maintenance day, not a study day. No robotics yet, season starts the 12th.');
-        add('dr',"Light past-paper set only if there's genuinely time left. Don't force it.",30,'r');
+        if (roboticsOn){
+          notesArr.push('Robotics + climbing both today — maintenance day, not a study day.');
+          add('dr',"Light past-paper set only if there's genuinely time left. Don't force it.",30,'r');
+        } else {
+          notesArr.push("Climbing today, but robotics isn't running yet (starts the 12th) — no reason to go light. Built around climbing instead of robotics, same as any other weekday.");
+          add('dr',"Climbing, incl. travel.",120,'r');
+          add('de',"ESAT — Practice: timed section work.",90,'esat');
+          const s=ROT[rotIdx%3]; rotIdx++;
+          add(subjectDot[s],`${subjectName[s]} — Retake Prep.`,60,s);
+          add('dr',"Homework.",30,'r');
+          if (cur==='2026-09-03') add('dr',"Wind Tunnel — final wrap-up, carried over from Sept 2 (didn't get to it that night).",60,'r');
+          if (cur==='2026-09-08') add('dp',"Physics — Retake Prep: carried over from Sept 2 (didn't get to it that night).",90,'p');
+        }
       } else {
         if (phase===2){
           add('de',"ESAT — Practice: timed section work.",105,'esat');
@@ -416,6 +423,7 @@ function buildPlan(){
             add(subjectDot[s],desc,75,s==='fm'?'m':s);
           }
           add('dr',"Homework — do it properly. Predicted grades are partly built on this, not just papers at home.",40,'r');
+          if (cur==='2026-09-07') add('dm',"Maths — Retake Prep: carried over from Sept 2 (didn't get to it that night).",75,'m');
         } else {
           const s=ROT[rotIdx%3]; rotIdx++;
           add(subjectDot[s],`${subjectName[s]} — Retake Prep: timed past paper, or whichever remains soonest on your timetable.`,150,s);
@@ -476,7 +484,7 @@ function buildPlan(){
 }
  
 let currentPhase=1;
-let checkedDays={'2026-08-17':true,'2026-08-18':true,'2026-08-19':true,'2026-08-20':true,'2026-08-21':true,'2026-08-22':true,'2026-08-23':true,'2026-08-25':true,'2026-08-26':true};
+let checkedDays={'2026-08-17':true,'2026-08-18':true,'2026-08-19':true,'2026-08-20':true,'2026-08-21':true,'2026-08-22':true,'2026-08-23':true,'2026-08-25':true,'2026-08-26':true,'2026-08-27':true,'2026-08-28':true,'2026-08-29':true,'2026-08-30':true,'2026-08-31':true,'2026-09-01':true,'2026-09-02':true};
 let checkedTasks={
   '2026-08-17-0':true,'2026-08-17-1':true,'2026-08-17-2':true,'2026-08-17-3':true,
   '2026-08-18-0':true,'2026-08-18-1':true,'2026-08-18-2':true,'2026-08-18-3':true,'2026-08-18-4':true,'2026-08-18-5':true,
@@ -487,7 +495,12 @@ let checkedTasks={
   '2026-08-23-0':true,'2026-08-23-1':true,'2026-08-23-2':true,'2026-08-23-3':true,
   '2026-08-25-0':true,'2026-08-25-1':true,'2026-08-25-2':true,'2026-08-25-3':true,'2026-08-25-4':true,
   '2026-08-26-0':true,'2026-08-26-1':true,'2026-08-26-2':true,'2026-08-26-3':true,
-  '2026-09-02-1':true,'2026-09-02-3':true,'2026-09-02-5':true
+  '2026-08-28-0':true,'2026-08-28-1':true,'2026-08-28-2':true,
+  '2026-08-29-0':true,'2026-08-29-1':true,'2026-08-29-2':true,'2026-08-29-3':true,'2026-08-29-4':true,'2026-08-29-5':true,
+  '2026-08-30-0':true,'2026-08-30-1':true,
+  '2026-08-31-0':true,'2026-08-31-1':true,'2026-08-31-2':true,'2026-08-31-3':true,'2026-08-31-4':true,'2026-08-31-5':true,
+  '2026-09-01-0':true,'2026-09-01-1':true,'2026-09-01-2':true,'2026-09-01-3':true,'2026-09-01-4':true,'2026-09-01-5':true,
+  '2026-09-02-0':true,'2026-09-02-1':true,'2026-09-02-2':true
 };
 let stats=JSON.parse(JSON.stringify(DEFAULT_STATS));
 let planData=buildPlan();
@@ -737,6 +750,8 @@ init();
 </body>
 </html>
  
+
+
 
 
 
